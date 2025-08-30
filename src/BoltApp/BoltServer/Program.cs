@@ -14,9 +14,19 @@ namespace BoltServer
 
             app.MapHub<AccessorHub>("/accessorHub");
 
+            var webSocketOptions = new WebSocketOptions
+            {
+                KeepAliveInterval = TimeSpan.FromMinutes(2)
+            };
+
+            app.UseWebSockets(webSocketOptions);
+
             app.MapGet("/", () => "Bolt Server");
 
+
             app.Run();
+
+
         }
     }
 }

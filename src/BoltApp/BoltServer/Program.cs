@@ -1,4 +1,5 @@
 using BoltServer.Hubs;
+using BoltServer.WebSockets;
 
 namespace BoltServer
 {
@@ -10,6 +11,10 @@ namespace BoltServer
 
             builder.Services.AddSignalR();
 
+            //WebSocket services
+            builder.Services.AddSingleton<WebSockets.WebSocketConnectionManager>();
+            builder.Services.AddSingleton<WebSocketHandler, BoltWebSocketHandler>();
+
             var app = builder.Build();
 
             app.MapHub<AccessorHub>("/accessorHub");
@@ -20,8 +25,12 @@ namespace BoltServer
             };
 
             app.UseWebSockets(webSocketOptions);
+            app.UseWebSocketMiddleware("/ws");
 
             app.MapGet("/", () => "Bolt Server");
+
+            app.MapGet("/status", (WebSocketConnectionManager manager) =>
+                $"Connected clients: {manager.GetConnectedCount()}");
 
 
             app.Run();

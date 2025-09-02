@@ -1,34 +1,55 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using Websocket.Client;
 
 namespace BoltClient
 {
     internal class Program
     {
+        private static readonly ManualResetEvent ExitEvent = new ManualResetEvent(false);
 
         static async Task Main(string[] args)
         {
-            Console.WriteLine("Connecting to WebSocket server...");
-            var wsClient = new WebSocketClient("wss://localhost:7063/ws");
-            wsClient.ConnectionStateChanged += (sender, state) =>
-                Console.WriteLine($"Connection state changed to: {state}");
-            wsClient.MessageReceived += (sender, message) =>
-                Console.WriteLine($"Message received: {message}");
+            var url = new Uri("wss://localhost:7063/ws");
 
-            await wsClient.ConnectAsync();
-
-            Console.WriteLine("Connected! Type a message to send or 'exit' to quit");
-
-            string input;
-            while ((input = Console.ReadLine()) != "exit")
+            using (var client = new WebsocketClient(url))
             {
-                if (!string.IsNullOrEmpty(input))
-                {
-                    await wsClient.SendMessageAsync(input);
-                }
+                client.ReconnectTimeout = TimeSpan.FromSeconds(30);
+                client.ReconnectionHappened.Subscribe(info =>
+                    Console.WriteLine($"Reconnection happened, type: {info.Type}"));
+
+                client.MessageReceived.Subscribe(msg => Console.WriteLine($"Message received: {msg}"));
+                client.Start();
+
+                Task.Run(() => client.Send("{ message }"));
+
+                ExitEvent.WaitOne();
             }
         }
+        //static async Task Main(string[] args)
+        //{
+        //    Console.WriteLine("Connecting to WebSocket server...");
+        //    var wsClient = new WebSocketClient("wss://localhost:7063/ws");
+        //    wsClient.ConnectionStateChanged += (sender, state) =>
+        //        Console.WriteLine($"Connection state changed to: {state}");
+        //    wsClient.MessageReceived += (sender, message) =>
+        //        Console.WriteLine($"Message received: {message}");
+
+        //    await wsClient.ConnectAsync();
+
+        //    Console.WriteLine("Connected! Type a message to send or 'exit' to quit");
+
+        //    string input;
+        //    while ((input = Console.ReadLine()) != "exit")
+        //    {
+        //        if (!string.IsNullOrEmpty(input))
+        //        {
+        //            await wsClient.SendMessageAsync(input);
+        //        }
+        //    }
+        //}
 
         //static async Task Main(string[] args)
         //{

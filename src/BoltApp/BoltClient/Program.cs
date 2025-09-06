@@ -1,33 +1,57 @@
 ﻿using System;
+using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using BoltClient.SimpleWebSocketClient;
 using Microsoft.AspNetCore.SignalR.Client;
-using Websocket.Client;
 
 namespace BoltClient
 {
     internal class Program
     {
-        private static readonly ManualResetEvent ExitEvent = new ManualResetEvent(false);
-
         static async Task Main(string[] args)
         {
-            var url = new Uri("wss://localhost:7063/ws");
+            // Create the client
+            var client = new SimpleWebSocketClient.SimpleWebSocketClient(new Uri("wss://localhost:7063/ws"));
 
-            using (var client = new WebsocketClient(url))
+            // Subscribe to notifications
+            client.NotificationReceived.Subscribe(message =>
             {
-                client.ReconnectTimeout = TimeSpan.FromSeconds(30);
-                client.ReconnectionHappened.Subscribe(info =>
-                    Console.WriteLine($"Reconnection happened, type: {info.Type}"));
+                if (message.MessageType == WebSocketMessageType.Text)
+                    Console.WriteLine($"Received text: {message.Text}");
+                else
+                    Console.WriteLine($"Received binary, size: {message.Binary?.Length} bytes");
+            });
 
-                client.MessageReceived.Subscribe(msg => Console.WriteLine($"Message received: {msg}"));
-                client.Start();
+            // Subscribe to connection state changes
+            client.ConnectionStateChanged.Subscribe(info =>
+            {
+                Console.WriteLine($"Connection state changed to: {info.State}");
+            });
 
-                Task.Run(() => client.Send("{ message }"));
-
-                ExitEvent.WaitOne();
-            }
+            // Start the client
+            await client.Start();
         }
+        //private static readonly ManualResetEvent ExitEvent = new ManualResetEvent(false);
+
+        //static async Task Main(string[] args)
+        //{
+        //    var url = new Uri("wss://localhost:7063/ws");
+
+        //    using (var client = new WebsocketClient(url))
+        //    {
+        //        client.ReconnectTimeout = TimeSpan.FromSeconds(30);
+        //        client.ReconnectionHappened.Subscribe(info =>
+        //            Console.WriteLine($"Reconnection happened, type: {info.Type}"));
+
+        //        client.MessageReceived.Subscribe(msg => Console.WriteLine($"Message received: {msg}"));
+        //        client.Start();
+
+        //        Task.Run(() => client.Send("{ message }"));
+
+        //        ExitEvent.WaitOne();
+        //    }
+        //}
         //static async Task Main(string[] args)
         //{
         //    Console.WriteLine("Connecting to WebSocket server...");

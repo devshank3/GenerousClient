@@ -11,13 +11,23 @@ namespace BoltServer
 
             builder.Services.AddSignalR();
 
+            // Add controllers and Swagger
+            builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+
             //WebSocket services
-            builder.Services.AddSingleton<WebSockets.WebSocketConnectionManager>();
+            builder.Services.AddSingleton<WebSocketConnectionManager>();
             builder.Services.AddSingleton<WebSocketHandler, BoltWebSocketHandler>();
 
             var app = builder.Build();
 
+            // Configure Swagger
+            app.UseSwagger();
+            app.UseSwaggerUI();
+
             app.MapHub<AccessorHub>("/accessorHub");
+            app.MapControllers();
 
             var webSocketOptions = new WebSocketOptions
             {

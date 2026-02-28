@@ -11,7 +11,7 @@ namespace BoltClient.SimpleWebSocketClient
     /// </summary>
     public interface ISimpleWebsocketClient : IDisposable
     {
-        
+
         /// <summary>
         /// Stream for notification messages
         /// </summary>
@@ -31,6 +31,12 @@ namespace BoltClient.SimpleWebSocketClient
         /// Stop the websocket connection
         /// </summary>
         Task Stop();
+
+        Task Send(string message);
+
+        Task Send(byte[] message);
+
+        bool IsReconnectionEnabled { get; set; }
 
     }
 }

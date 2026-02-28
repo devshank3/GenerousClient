@@ -182,7 +182,6 @@ namespace BoltClient.SimpleWebSocketClient
 
                     await Listen(cancellationToken);
 
-                    // If we reached here normally, the connection was closed gracefully
                     if (!_reconnecting)
                         return;
                 }
